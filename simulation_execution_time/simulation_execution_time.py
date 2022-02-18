@@ -1,5 +1,9 @@
 import numpy as np
 
+"""
+This below part is independent of the hardware types
+"""
+
 class Circuit:
     """
     num_qubits(int) : number of qubits. It should be integer multiple of num_cores
@@ -41,6 +45,7 @@ class Circuit:
 
         return topology
 
+    # TODO : create a function to calculate time
     def operate(self, operation_name: str, *qubits):
         operation = Operation(operation_name=operation_name, *qubits)
         for i in qubits:
@@ -48,6 +53,8 @@ class Circuit:
 
         if operation.type != 'two' or 'inter':
             pass
+
+        return
 
 
 class Qubit:
@@ -59,6 +66,15 @@ class Qubit:
         self.operations = []
         self.time = 0
         self.core = core_address
+
+    def calculate_time(self):
+        time = 0
+
+        return time
+
+    def synchronize_time(self):
+        pass
+
 
 
 class Core:
@@ -86,14 +102,16 @@ class Operation:
         self.commute_list = self.check_comm_list(operation_name)
         self.qubit = qubits[0]
         self.target_qubit = qubits[1]
+        self.time = self.check_time()
+        self.delay = self.check_is_delay()
 
     @staticmethod
     def check_comm_list(operation_name):
         commute_dict = {
-            'i': [],
-            'x': [],
-            'y': [],
-            'z': [],
+            'i': ['i', 'x', 'y', 'z', 'h', 's', 't', 'rx', 'ry', 'rz', 'cx', 'cy', 'cz', 'rxx', 'ryy', 'rzz', 'swap'],
+            'x': ['i', 'x', 'y', 'z', 'rx', 'cx_t', 'cy_t', 'cz', 'rxx'],
+            'y': ['i', 'x', 'y', 'z', 'ry', 'cx_t', 'cy_t', 'cz', 'ryy'],
+            'z': ['i', 'x', 'y', 'z', 'rz', 'cx', 'cy', 'cz', 'rzz'],
             'h': [],
             's': [],
             't': [],
@@ -119,7 +137,7 @@ class Operation:
 
     def check_type(self,operation_name):
         operation_type = str
-        operation_list = ['x', 'y', 'z', 'h', 's', 't', 'rx', 'ry', 'rz', 'cx', 'cy', 'cz', 'rxx', 'ryy', 'rzz', 'swap']
+        gate_list = ['i', 'x', 'y', 'z', 'h', 's', 't', 'rx', 'ry', 'rz', 'cx', 'cy', 'cz', 'rxx', 'ryy', 'rzz', 'swap']
         one = ['x', 'y', 'z', 'h', 's', 't', 'rx', 'ry', 'rz']
         two = ['cx', 'cy', 'cz', 'rxx', 'ryy', 'rzz', 'swap']
         init = 'init'
@@ -143,6 +161,29 @@ class Operation:
 
         return operation_type
 
+    def check_time(self):
+        # time unit is micro second. 'init' might not be used. 'inter' depends on hardware type.
+        time = {
+            'one': 5,
+            'two': 40,
+            'init': int,
+            'detection': 180,
+            'inter': int
+        }  # TODO : create a function about time of inter comm considering hardware type.
+
+        return time[f'{self.type}']
+
+    # TODO : create a function considering Scheduler.
+    def check_is_delay(self):
+        delay = 0
+
+        return delay
+
+
+"""
+    The below part depends on hardware type. 
+"""
+
 
 class Shuttling:
     """
@@ -150,6 +191,23 @@ class Shuttling:
     """
     def __init__(self, is_path: bool):
         self.is_path = is_path  # If True means 'path' or False means 'junction'
+
+
+class Scheduler:
+    def __init__(self):
+        pass
+
+
+class Mapper:
+    def __init__(self):
+        pass
+
+
+class Simulator:
+    def __init__(self):
+        pass
+
+
 
 
 if __name__=="__main__":
