@@ -17,7 +17,7 @@ class HeatingRate:
     def export_csv_data(file_name: str, data: dict):
         data_frame = ps.DataFrame(data)
 
-        file_name = f'{current_path}/csv_data/{file_name}'
+        file_name = f'{current_path}/data/heating_rate/csv_data/{file_name}'
 
         if not os.path.exists(f'{file_name}.csv'):
             data_frame.to_csv(f'{file_name}.csv')
@@ -35,12 +35,12 @@ class HeatingRate:
 
     @staticmethod
     def read_csv_data(file_name: str):
-        return ps.read_csv(f'{current_path}/csv_data/{file_name}')
+        return ps.read_csv(f'{current_path}/data/heating_rate/csv_data/{file_name}')
 
     @staticmethod
     def export_plot_data(data, file_name):
 
-        file_name = f'{current_path}/plot_data/{file_name}'
+        file_name = f'{current_path}/data/heating_rate/plot_data/{file_name}'
         no = 1
 
         # if already exists same name file
@@ -167,7 +167,7 @@ class HeatingRate:
             cmap_count += 1
 
         # save the figure
-        file_name = f'{current_path}/plot_data/{name}'
+        file_name = f'{current_path}/data/heating_rate/plot_data/{name}'
         no = 1
         while os.path.exists(f'{file_name}({no}).png'):  # if already exists same name file
             no += 1
@@ -200,7 +200,7 @@ class HeatingRate:
         ax.imshow(li, cmap="binary")
 
         # save the figure
-        file_name = f'{current_path}/plot_data/{name}'
+        file_name = f'{current_path}/data/heating_rate/plot_data/{name}'
         no = 1
         while os.path.exists(f'{file_name}({no}).png'):  # if already exists same name file
             no += 1

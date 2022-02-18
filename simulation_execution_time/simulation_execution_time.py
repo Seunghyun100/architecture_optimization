@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 
 class Circuit:
     """
@@ -36,6 +36,7 @@ class Circuit:
                 qubit_index = i*capacity + k
                 qubit = Qubit(core_address=i, index=qubit_index)
                 topology['qubits'][i].append(qubit)
+                topology['cores'][i].qubits.append(qubit)
 
         return topology
 
@@ -47,7 +48,7 @@ class Qubit:
     """
     def __init__(self, core_address: int, index: int):
         self.index = index
-        self.circuit = []
+        self.operations = []
         self.time = 0
         self.core = core_address
 
