@@ -15,6 +15,7 @@ class Circuit:
         self.capacity = int(num_qubits/num_cores)
 
         topology = self.init_circuit(num_qubits=num_qubits, num_cores=num_cores)
+        self.topology = topology
         self.qubit_list = topology['qubits']
         self.core_list = topology['cores']
 
@@ -40,6 +41,13 @@ class Circuit:
 
         return topology
 
+    def operate(self, operation_name: str, *qubits):
+        operation = Operation(operation_name=operation_name, *qubits)
+        for i in qubits:
+            self.qubit_list[i] = operation
+
+        if operation.type != 'two' or 'inter':
+            pass
 
 
 class Qubit:
@@ -73,40 +81,67 @@ class Operation:
     """
     def __init__(self, operation_name: str, *qubits):
         self.name = operation_name
-        self.type = str
-        self.commute_list = self.checkCommList(operation_name)
-        self.is_inter_comm = self.isInterComm(qubits[0], qubits[1])
+        self.is_inter_comm = self.check_is_inter_comm(qubits[0], qubits[1])
+        self.type = self.check_type(operation_name=operation_name)  # i.e., one, two, init, detection, inter
+        self.commute_list = self.check_comm_list(operation_name)
         self.qubit = qubits[0]
         self.target_qubit = qubits[1]
 
     @staticmethod
-    def checkCommList(operation_name):
+    def check_comm_list(operation_name):
         commute_dict = {
-            'i' : [],
-            'x' : [],
-            'y' : [],
-            'z' : [],
-            'h' : [],
-            's' : [],
-            't' : [],
-            'rx' : [],
-            'ry' : [],
-            'rz' : [],
-            'cx' : [],
-            'cy' : [],
-            'cz' : [],
-            'rxx' : [],
-            'ryy' : [],
-            'rzz' : [],
-            'swap' : []
+            'i': [],
+            'x': [],
+            'y': [],
+            'z': [],
+            'h': [],
+            's': [],
+            't': [],
+            'rx': [],
+            'ry': [],
+            'rz': [],
+            'cx': [],
+            'cy': [],
+            'cz': [],
+            'rxx': [],
+            'ryy': [],
+            'rzz': [],
+            'swap': []
         }
         return commute_dict[operation_name]
 
-    def isInterComm(self, c_qubit, t_qubit):
-        is_inter_comm =False
+    @staticmethod
+    def check_is_inter_comm(c_qubit, t_qubit):
+        is_inter_comm = False
         if not c_qubit.core == t_qubit.core:
             is_inter_comm = True
         return is_inter_comm
+
+    def check_type(self,operation_name):
+        operation_type = str
+        operation_list = ['x', 'y', 'z', 'h', 's', 't', 'rx', 'ry', 'rz', 'cx', 'cy', 'cz', 'rxx', 'ryy', 'rzz', 'swap']
+        one = ['x', 'y', 'z', 'h', 's', 't', 'rx', 'ry', 'rz']
+        two = ['cx', 'cy', 'cz', 'rxx', 'ryy', 'rzz', 'swap']
+        init = 'init'
+        detection = 'detection'
+        inter = 'inter'
+
+        if operation_name in one:
+            operation_type = 'one'
+
+        if operation_name in two:
+            if self.is_inter_comm:
+                operation_type = inter
+            else:
+                operation_type = 'two'
+
+        if operation_name == init:
+            operation_type = init
+
+        if operation_name == detection:
+            operation_type = detection
+
+        return operation_type
 
 
 class Shuttling:

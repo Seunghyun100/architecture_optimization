@@ -196,7 +196,7 @@ class HeatingRate:
             for j in range(t):
                 li[j][i] = data[f'{key}'][j]
 
-        plt.ylim(1, t)
+        plt.ylim(1, 50)  # if 't' insert to 2nd argument, might be too long
         ax.imshow(li, cmap="binary")
 
         # save the figure
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     #
     # test.compare_heating_rate(qccd_data=test_data2, qbus_data=test_data3)
 
-    test_data = test.read_csv_data(file_name="comparing_Q-bus_vs_QCCD(3).csv")
+    test_data = test.read_csv_data(file_name="comparing_Q-bus_vs_QCCD(5).csv")
     test.plot_contour_line(data=test_data, name="test")
 
     # test.plot_2d(list(x), name="test")
