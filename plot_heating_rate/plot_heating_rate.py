@@ -212,9 +212,12 @@ class HeatingRate:
 
 
 if __name__ == '__main__':
+
+    current_path = os.getcwd() + '/../'
+
     test = HeatingRate()
-    test.calculate_qccd(upto_n = 50, upto_t = 100, m = 5, name="QCCD_heating_rate_m5_100")
-    test.calculate_qbus(upto_n=50, upto_t=100, m=5, name="Q-bus_heating_rate_m5_100")
+    # test.calculate_qccd(upto_n = 50, upto_t = 100, m = 5, name="QCCD_heating_rate_m5_100")
+    # test.calculate_qbus(upto_n=50, upto_t=100, m=5, name="Q-bus_heating_rate_m5_100")
 
 
     # test_data1 = test.read_csv_data("QCCD_heating_rate_m5_100_core1.csv")
@@ -223,7 +226,7 @@ if __name__ == '__main__':
     #
     # test.compare_heating_rate(qccd_data=test_data2, qbus_data=test_data3)
 
-    test_data = test.read_csv_data(file_name="comparing_Q-bus_vs_QCCD(8).csv")
+    test_data = test.read_csv_data(file_name="comparing_Q-bus_vs_QCCD(3).csv")
     test.plot_contour_line(data=test_data, name="test")
 
     # test.plot_2d(list(x), name="test")
