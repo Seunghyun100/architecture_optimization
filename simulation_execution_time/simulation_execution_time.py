@@ -45,16 +45,17 @@ class Circuit:
 
         return topology
 
-    # TODO : create a function to calculate time
     def operate(self, operation_name: str, *qubits):
         operation = Operation(operation_name=operation_name, *qubits)
         for i in qubits:
-            self.qubit_list[i] = operation
-
+            self.qubit_list[i].oeprations.append(operation)
         if operation.type != 'two' or 'inter':
             pass
-
         return
+
+    def synchronize_time(self, control_qubit, target_qubit):
+        time = 0
+        return time
 
 
 class Qubit:
@@ -64,17 +65,25 @@ class Qubit:
     def __init__(self, core_address: int, index: int):
         self.index = index
         self.operations = []
-        self.time = 0
+        self.time = []
         self.core = core_address
 
     def calculate_time(self):
-        time = 0
+        time = []
+        for i in range(len(self.operations)):
+            operation = self.operations[i]
+            if operation.is_delay:
+                time.append([i, operation.time])
+            else:
+                time.append(operation.time)
+        self.time = time
+        return self.time
 
-        return time
-
-    def synchronize_time(self):
-        pass
-
+    def commute_operation(self, operation1: int, operation2: int):  # parameter is index of operation in list
+        li = self.operations
+        li[operation1], li[operation2] = li[operation2], li[operation1]
+        self.operations = li
+        return self.operations
 
 
 class Core:
@@ -102,8 +111,8 @@ class Operation:
         self.commute_list = self.check_comm_list(operation_name)
         self.qubit = qubits[0]
         self.target_qubit = qubits[1]
-        self.time = self.check_time()
-        self.delay = self.check_is_delay()
+        self.time = self.calculate_time()
+        self.is_delay = self.check_is_delay()
 
     @staticmethod
     def check_comm_list(operation_name):
@@ -148,10 +157,7 @@ class Operation:
             operation_type = 'one'
 
         if operation_name in two:
-            if self.is_inter_comm:
-                operation_type = inter
-            else:
-                operation_type = 'two'
+            operation_type = 'two'
 
         if operation_name == init:
             operation_type = init
@@ -161,22 +167,26 @@ class Operation:
 
         return operation_type
 
-    def check_time(self):
+    def calculate_time(self):
         # time unit is micro second. 'init' might not be used. 'inter' depends on hardware type.
         time = {
             'one': 5,
             'two': 40,
             'init': int,
             'detection': 180,
-            'inter': int
-        }  # TODO : create a function about time of inter comm considering hardware type.
+        }
+
+        # TODO : create a function about time of inter comm considering hardware type.
+        if self.is_inter_comm:
+            time['two'] = int
 
         return time[f'{self.type}']
 
-    # TODO : create a function considering Scheduler.
+    # It is to synchronize gate execution for two qubit gate
     def check_is_delay(self):
-        delay = 0
-
+        delay = False
+        if self.type == "two":
+            delay = True
         return delay
 
 
@@ -185,7 +195,7 @@ class Operation:
 """
 
 
-class Shuttling:
+class InterComm:
     """
     is_path(bool) : Determine whether it is a path or a junction
     """
