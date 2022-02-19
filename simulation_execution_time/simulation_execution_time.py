@@ -58,8 +58,45 @@ class Circuit:
             i.arrange_time_list()
             i.calculate_auxiliary_time_list()
 
+        trigger = True
+        while trigger:
+            for i in self.qubit_list:
+                if self.check_first_two(i):
+                    control_qubit = i.auxiliary_time_list[0][2].qubit
+                    target_qubit = i.auxiliary_time_list[0][2].target_qubit
+                    if self.check_first_two(control_qubit) and self.check_first_two(target_qubit):
+                        self.synchronize_timing()
+
+            # Break the while loop if finish to synchronize
+            for i in self.qubit_list:
+                if not self.check_done_qubit(i):
+                    break
+                trigger = False
+
         return time
 
+    @staticmethod
+    def check_done_qubit(qubit):
+        done = False
+        if len(qubit.auxiliary_time_list) == 0:
+            qubit.auxiliary_time_list.append(0)
+            done = True
+        if len(qubit.auxiliary_time_list) == 1:
+            if type(qubit.auxiliary_time_list[0]) == int:
+                done = True
+        return done
+
+    @staticmethod
+    def check_first_two(qubit):
+        is_first_two = False
+        if qubit.auxiliary_time_list[0] == list:
+            is_first_two = True
+        elif qubit.auxiliary_time_list[1] == list:
+            is_first_two = True
+        return is_first_two
+
+    def synchronize_timing(self, operation):
+        pass
 
 class Qubit:
     """
@@ -100,7 +137,9 @@ class Qubit:
             if i[0] == 'intra' or 'inter':
                 auxiliary_time_list.append(i)
             else:
-                if type(auxiliary_time_list[len(auxiliary_time_list)-1]) == list:
+                if len(auxiliary_time_list) == 0:
+                    auxiliary_time_list.append(i[1])
+                elif type(auxiliary_time_list[len(auxiliary_time_list)-1]) == list:
                     auxiliary_time_list.append(i[1])
                 else:
                     auxiliary_time_list[len(auxiliary_time_list)-1] += i[1]
