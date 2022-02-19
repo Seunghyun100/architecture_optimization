@@ -33,7 +33,7 @@ class Circuit:
         capacity = self.capacity
 
         for i in range(num_cores):
-            topology['cores'].append(Core(capacity=capacity, location=i))
+            topology['cores'].append(Core(capacity=capacity, address=i))
             topology['qubits'].append([])
 
         for i in range(num_cores):
@@ -49,12 +49,15 @@ class Circuit:
         operation = Operation(operation_name=operation_name, *qubits)
         for i in qubits:
             self.qubit_list[i].oeprations.append(operation)
-        if operation.type != 'two' or 'inter':
-            pass
         return
 
-    def synchronize_time(self, control_qubit, target_qubit):
+    def calculate_execution_time(self):
         time = 0
+        # update operation time list
+        for i in self.qubit_list:
+            i.arrange_time_list()
+            i.calculate_auxiliary_time_list()
+
         return time
 
 
@@ -65,19 +68,45 @@ class Qubit:
     def __init__(self, core_address: int, index: int):
         self.index = index
         self.operations = []
-        self.time = []
-        self.core = core_address
+        self.time_list = []
+        self.auxiliary_time_list = []  # clustering single gate to synchronize 2-qubit gate timing.
+        self.core_address = core_address
 
-    def calculate_time(self):
-        time = []
+    def arrange_time_list(self):
+        time_list = []
         for i in range(len(self.operations)):
             operation = self.operations[i]
-            if operation.is_delay:
-                time.append([i, operation.time])
+            if operation.type == 'one':
+                time_list.append(['one', operation.time, operation])
+            if operation.type == 'two':
+                if operation.is_inter_comm:
+                    time_list.append(['inter', operation.time, operation])
+                else:
+                    time_list.append(['intra', operation.time, operation])
+            if operation.type == 'init':
+                time_list.append(['init', operation.time, operation])
+            if operation.type == 'detection':
+                time_list.append(['detection', operation.time, operation])
+
+        self.time_list = time_list
+        return self.time_list
+
+    def calculate_auxiliary_time_list(self):
+        auxiliary_time_list = []
+        time_list = self.arrange_time_list()
+        index = 0
+
+        for i in time_list:
+            if i[0] == 'intra' or 'inter':
+                auxiliary_time_list.append(i)
             else:
-                time.append(operation.time)
-        self.time = time
-        return self.time
+                if type(auxiliary_time_list[len(auxiliary_time_list)-1]) == list:
+                    auxiliary_time_list.append(i[1])
+                else:
+                    auxiliary_time_list[len(auxiliary_time_list)-1] += i[1]
+
+        self.auxiliary_time_list = auxiliary_time_list
+        return self.auxiliary_time_list
 
     def commute_operation(self, operation1: int, operation2: int):  # parameter is index of operation in list
         li = self.operations
@@ -91,9 +120,9 @@ class Core:
     location(int) : Location of core. It determines topology like shuttling path.
     capacity(int) : Capacity of core
     """
-    def __init__(self, capacity: int, location: int):
+    def __init__(self, capacity: int, address: int):
         self.qubits = []
-        self.location = location
+        self.address = address
         self.capacity = capacity
 
 
@@ -107,12 +136,12 @@ class Operation:
     def __init__(self, operation_name: str, *qubits):
         self.name = operation_name
         self.is_inter_comm = self.check_is_inter_comm(qubits[0], qubits[1])
-        self.type = self.check_type(operation_name=operation_name)  # i.e., one, two, init, detection, inter
+        self.type = self.check_type(operation_name=operation_name)  # i.e., one, two(intra or inter), init, detection
         self.commute_list = self.check_comm_list(operation_name)
         self.qubit = qubits[0]
         self.target_qubit = qubits[1]
         self.time = self.calculate_time()
-        self.is_delay = self.check_is_delay()
+        # self.is_delay = self.check_is_delay()
 
     @staticmethod
     def check_comm_list(operation_name):
@@ -140,7 +169,7 @@ class Operation:
     @staticmethod
     def check_is_inter_comm(c_qubit, t_qubit):
         is_inter_comm = False
-        if not c_qubit.core == t_qubit.core:
+        if not c_qubit.core_address == t_qubit.core_address:
             is_inter_comm = True
         return is_inter_comm
 
@@ -151,7 +180,6 @@ class Operation:
         two = ['cx', 'cy', 'cz', 'rxx', 'ryy', 'rzz', 'swap']
         init = 'init'
         detection = 'detection'
-        inter = 'inter'
 
         if operation_name in one:
             operation_type = 'one'
@@ -183,11 +211,11 @@ class Operation:
         return time[f'{self.type}']
 
     # It is to synchronize gate execution for two qubit gate
-    def check_is_delay(self):
-        delay = False
-        if self.type == "two":
-            delay = True
-        return delay
+    # def check_is_delay(self):
+    #     delay = False
+    #     if self.type == "two":
+    #         delay = True
+    #     return delay
 
 
 """
@@ -217,7 +245,14 @@ class Simulator:
     def __init__(self):
         pass
 
+    # TODO : Calculate circuit execution time.
+    #  To calculate circuit execution time, we should sum circuit.qubit.time (list)
+    #  But if there are two qubit gate, we would add delay to synchronize operation timing.
+    def execution(self, circuit):
+        execution_time = 0
 
+
+        return execution_time
 
 
 if __name__=="__main__":
