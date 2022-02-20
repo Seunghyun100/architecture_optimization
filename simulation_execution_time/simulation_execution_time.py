@@ -10,11 +10,15 @@ class Circuit:
     num_cores(int) : number of cores. They have same number of qubits.
                     The capacity of each core is num_qubits divided by num_cores.
                     We would evaluate 6 cores architecture. So default value is 6.
+    hardware(str) : Hardware configuration. i.e., none, qbus, qccd_comb, qccd_grid
+    is_symmetric(bool) : whether it is symmetric of inter communication.
     """
-    def __init__(self, num_qubits: int, num_cores: int = 6):
+    def __init__(self, num_qubits: int, num_cores: int = 6, hardware: str = 'none', is_symmetric: bool = False):
         if num_qubits%num_cores != 0:
             raise print("Number of qubits is not integer multiple of number of cores.")
 
+        self.hardware = hardware
+        self.is_symmetric = is_symmetric
         self.num_qubits = num_qubits
         self.capacity = int(num_qubits/num_cores)
 
@@ -52,18 +56,19 @@ class Circuit:
         return
 
     def calculate_execution_time(self):
-        exectuion_time_list = []
+        execution_time_list = []
         # update operation time list
-        for i in self.qubit_list:
-            i.arrange_time_list()
-            i.calculate_auxiliary_time_list()
+        for qubit in self.qubit_list:
+            qubit.build_auxiliary_time_list()
+            if self.hardware != 'none':  # TODO : WIP
+                self.insert_inter_comm(qubit)
 
         trigger = True
         while trigger:
-            for i in self.qubit_list:
-                self.merge_int(i)
-                if not self.check_done_qubit(i):
-                    operation = i.auxiliary_time_list[1][2]
+            for qubit in self.qubit_list:
+                self.merge_int(qubit)
+                if not self.check_done_qubit(qubit):
+                    operation = qubit.auxiliary_time_list[1][2]
                     control_qubit = operation.qubit
                     target_qubit = operation.target_qubit
 
@@ -72,12 +77,17 @@ class Circuit:
                         self.synchronize_timing(control_qubit, target_qubit)
 
             # Break the while loop if finish to synchronize
-            for i in self.qubit_list:
-                if not self.check_done_qubit(i):
+            for qubit in self.qubit_list:
+                if not self.check_done_qubit(qubit):
+                    trigger = True
                     break
                 trigger = False
 
-        return exectuion_time_list
+            if not trigger:
+                for qubit in self.qubit_list:
+                    execution_time_list.append(qubit.auxiliary_time_list[0])
+
+        return execution_time_list
 
     @staticmethod
     def check_done_qubit(qubit):
@@ -113,6 +123,14 @@ class Circuit:
 
         return control_qubit, target_qubit
 
+    # TODO : WIP
+    def insert_inter_comm(self, qubit):
+        auxiliary_time_list = qubit.auxiliary_time_list
+        for i in range(len(auxiliary_time_list)):
+            if type(auxiliary_time_list[i]) == list:
+                if auxiliary_time_list[i][0] =='inter':
+
+
 
 class Qubit:
     """
@@ -144,7 +162,7 @@ class Qubit:
         self.time_list = time_list
         return self.time_list
 
-    def calculate_auxiliary_time_list(self):
+    def build_auxiliary_time_list(self):
         auxiliary_time_list = [0]
         time_list = self.arrange_time_list()
 
@@ -193,8 +211,8 @@ class Operation:
         self.qubit = qubits[0]
         self.target_qubit = qubits[1]
         self.time = self.calculate_time()
-        # self.is_delay = self.check_is_delay()
 
+    # TODO : build a commutable list of each gate
     @staticmethod
     def check_comm_list(operation_name):
         commute_dict = {
@@ -248,7 +266,7 @@ class Operation:
         return operation_type
 
     def calculate_time(self):
-        # time unit is micro second. 'init' might not be used. 'inter' depends on hardware type.
+        # time unit is micro second. 'init' might not be used.
         time = {
             'one': 5,
             'two': 40,
@@ -256,18 +274,7 @@ class Operation:
             'detection': 180,
         }
 
-        # TODO : create a function about time of inter comm considering hardware type.
-        if self.is_inter_comm:
-            time['two'] = int
-
         return time[f'{self.type}']
-
-    # It is to synchronize gate execution for two qubit gate
-    # def check_is_delay(self):
-    #     delay = False
-    #     if self.type == "two":
-    #         delay = True
-    #     return delay
 
 
 """
@@ -275,12 +282,23 @@ class Operation:
 """
 
 
+# TODO : WIP
 class InterComm:
-    """
-    is_path(bool) : Determine whether it is a path or a junction
-    """
-    def __init__(self, is_path: bool):
-        self.is_path = is_path  # If True means 'path' or False means 'junction'
+    def __init__(self, hardware: str, original_oepration, is_symmetric: bool = False):
+        self.hardware = hardware
+        self.original_operation = original_oepration
+        self.is_symmetric = is_symmetric
+        self.operation_list = []  # It is procedure list of inter communication.
+        self.time_list = []  # It is to calculate inter communication time(execution time).
+
+    def build_inter_comm(self):
+        # We assume every inter communication is CNOT gate where Q-bus.
+        if self.hardware == 'qbus':
+
+        elif self.hardware == 'qccd_comb':
+            pass
+        elif self.hardware == 'qccd_grid':
+            pass
 
 
 class Scheduler:
