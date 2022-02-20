@@ -52,7 +52,7 @@ class Circuit:
         return
 
     def calculate_execution_time(self):
-        time = 0
+        exectuion_time_list = []
         # update operation time list
         for i in self.qubit_list:
             i.arrange_time_list()
@@ -61,11 +61,15 @@ class Circuit:
         trigger = True
         while trigger:
             for i in self.qubit_list:
-                if self.check_first_two(i):
-                    control_qubit = i.auxiliary_time_list[0][2].qubit
-                    target_qubit = i.auxiliary_time_list[0][2].target_qubit
-                    if self.check_first_two(control_qubit) and self.check_first_two(target_qubit):
-                        self.synchronize_timing()
+                self.merge_int(i)
+                if not self.check_done_qubit(i):
+                    operation = i.auxiliary_time_list[1][2]
+                    control_qubit = operation.qubit
+                    target_qubit = operation.target_qubit
+
+                    if self.check_first_two(qubit=control_qubit, operation=operation) \
+                            and self.check_first_two(qubit=target_qubit, operation=operation):
+                        self.synchronize_timing(control_qubit, target_qubit)
 
             # Break the while loop if finish to synchronize
             for i in self.qubit_list:
@@ -73,30 +77,42 @@ class Circuit:
                     break
                 trigger = False
 
-        return time
+        return exectuion_time_list
 
     @staticmethod
     def check_done_qubit(qubit):
         done = False
-        if len(qubit.auxiliary_time_list) == 0:
-            qubit.auxiliary_time_list.append(0)
-            done = True
         if len(qubit.auxiliary_time_list) == 1:
-            if type(qubit.auxiliary_time_list[0]) == int:
-                done = True
+            done = True
         return done
 
-    @staticmethod
-    def check_first_two(qubit):
+    def merge_int(self, qubit):
+        if not self.check_done_qubit(qubit):
+            while type(qubit.auxiliary_time_list[1]) == int and not self.check_done_qubit(qubit):
+                qubit.auxiliary_time_list[0] += qubit.auxiliary_time_list.pop(1)
+        return qubit
+
+    def check_first_two(self, qubit, operation):
         is_first_two = False
-        if qubit.auxiliary_time_list[0] == list:
-            is_first_two = True
-        elif qubit.auxiliary_time_list[1] == list:
-            is_first_two = True
+        if not self.check_done_qubit(qubit):
+            if qubit.auxiliary_time_list[1][2] == operation:
+                is_first_two = True
         return is_first_two
 
-    def synchronize_timing(self, operation):
-        pass
+    @staticmethod
+    def synchronize_timing(control_qubit, target_qubit):
+        synchronized_timing = max(control_qubit.auxiliary_time_list[0], target_qubit.auxiliary_time_list[0])
+        operation_time = control_qubit.auxiliary_time_list[1][2].time
+        synchronized_timing += operation_time
+
+        control_qubit.auxiliary_time_list[0] = synchronized_timing
+        target_qubit.auxiliary_time_list[0] = synchronized_timing
+
+        control_qubit.auxiliary_time_list.pop(1)
+        target_qubit.auxiliary_time_list.pop(1)
+
+        return control_qubit, target_qubit
+
 
 class Qubit:
     """
@@ -129,20 +145,17 @@ class Qubit:
         return self.time_list
 
     def calculate_auxiliary_time_list(self):
-        auxiliary_time_list = []
+        auxiliary_time_list = [0]
         time_list = self.arrange_time_list()
-        index = 0
 
         for i in time_list:
             if i[0] == 'intra' or 'inter':
                 auxiliary_time_list.append(i)
             else:
-                if len(auxiliary_time_list) == 0:
-                    auxiliary_time_list.append(i[1])
-                elif type(auxiliary_time_list[len(auxiliary_time_list)-1]) == list:
+                if type(auxiliary_time_list[-1]) == list:
                     auxiliary_time_list.append(i[1])
                 else:
-                    auxiliary_time_list[len(auxiliary_time_list)-1] += i[1]
+                    auxiliary_time_list[-1] += i[1]
 
         self.auxiliary_time_list = auxiliary_time_list
         return self.auxiliary_time_list
