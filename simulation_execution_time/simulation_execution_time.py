@@ -128,7 +128,12 @@ class Circuit:
         auxiliary_time_list = qubit.auxiliary_time_list
         for i in range(len(auxiliary_time_list)):
             if type(auxiliary_time_list[i]) == list:
-                if auxiliary_time_list[i][0] =='inter':
+                operation = auxiliary_time_list[i]
+                if operation[0] == 'inter':
+                    inter_comm = InterComm(hardware=self.hardware, original_oepration=operation[2],
+                                           is_symmetric=self.is_symmetric)
+
+
 
 
 
@@ -288,17 +293,23 @@ class InterComm:
         self.hardware = hardware
         self.original_operation = original_oepration
         self.is_symmetric = is_symmetric
-        self.operation_list = []  # It is procedure list of inter communication.
-        self.time_list = []  # It is to calculate inter communication time(execution time).
+        self.operation_list = self.build_inter_comm()  # It is procedure list of inter communication.
+        self.time_list = self.calculate_time_list()  # It is to calculate inter communication time(execution time).
 
     def build_inter_comm(self):
         # We assume every inter communication is CNOT gate where Q-bus.
+        operation_list = []
         if self.hardware == 'qbus':
-
+            pass
         elif self.hardware == 'qccd_comb':
             pass
         elif self.hardware == 'qccd_grid':
             pass
+        return operation_list
+
+    def calculate_time_list(self):
+        time_list = []
+        return time_list
 
 
 class Scheduler:

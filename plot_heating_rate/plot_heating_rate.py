@@ -35,12 +35,12 @@ class HeatingRate:
 
     @staticmethod
     def read_csv_data(file_name: str):
-        return ps.read_csv(f'{current_path}/data/heating_rate/csv_data/{file_name}')
+        return ps.read_csv(f'{current_path}data/heating_rate/csv_data/{file_name}')
 
     @staticmethod
     def export_plot_data(data, file_name):
 
-        file_name = f'{current_path}/data/heating_rate/plot_data/{file_name}'
+        file_name = f'{current_path}data/heating_rate/plot_data/{file_name}'
         no = 1
 
         # if already exists same name file
@@ -66,6 +66,25 @@ class HeatingRate:
                 if j != 0:
                     pre_k = data[i][j-1]
                     k = (i/(i+m))*(pre_k + 4.2) + 1
+                    data[i].append(k)
+
+        self.export_csv_data(file_name=name, data=data)
+        return data
+
+    def calculate_closed_system(self, upto_n: int = 50, upto_t: int = 50, m: int = 1,
+                        k_init: float = 0, name: str = "closed_system_heating_rate"):
+        data = {}
+
+        for i in range(upto_n):
+            i += 1  # initial n = 1
+            # it means k0(initial #phonon) where n = i
+            data[i] = [k_init]
+
+        for i in range(upto_n):
+            i += 1
+            for j in range(upto_t+1):
+                if j != 0:
+                    k = (i/(i+m))*(9.4*j - 5.2) + 1
                     data[i].append(k)
 
         self.export_csv_data(file_name=name, data=data)
@@ -109,7 +128,6 @@ class HeatingRate:
     def compare_heating_rate(self, qbus_data, qccd_data, name: str = "comparing_Q-bus_vs_QCCD"):
         pros_qccd = {}  # it has boolean value at n and t
 
-
         if np.size(qbus_data) == np.size(qccd_data):
             n = len(qbus_data.keys()) - 1  # number of qubit per core
             t = len(qbus_data['1'])  # upto_t + 1
@@ -122,16 +140,20 @@ class HeatingRate:
                         pros_qccd[f'{i}'].append(True)
                     else:
                         pros_qccd[f'{i}'].append(False)
-            self.export_csv_data(file_name = name, data = pros_qccd)
+            self.export_csv_data(file_name=name, data=pros_qccd)
             return pros_qccd
 
-    def plot_2d(self, x_axis: list, y_axis: list = None, name: str = "no_name_2d"):
+    def plot_2d(self, x_axis: list, n, y_axis: list = None, name: str = "no_name_2d"):
         if not y_axis:
             y_axis = range(len(x_axis))
         plt.plot(y_axis, x_axis)
-        plt.show()
+        plt.xlabel("#Shuttling")
+        plt.ylabel("#Phonon")
+        plt.title(f"{n} Qubits per core")
 
         self.export_plot_data(data=plt, file_name=name)
+        plt.show()
+
         return plt
 
     def plot_3d(self, *data, name: str = "no_name_3d"):
@@ -146,7 +168,7 @@ class HeatingRate:
         ax.view_init(elev=5., azim=130)  # 각도 지정
 
         cmap_count = 0
-        cmap_list = ['Blues', 'Greens', 'hot']
+        cmap_list = ['inferno', 'Blues', 'Greens']
 
         for data_i in data:
             # make data frame
@@ -197,6 +219,7 @@ class HeatingRate:
                 li[j][i] = data[f'{key}'][j]
 
         plt.ylim(1, 50)  # if 't' insert to 2nd argument, might be too long
+        plt.title("Comparing #Phonon")
         ax.imshow(li, cmap="binary")
 
         # save the figure
@@ -216,22 +239,31 @@ if __name__ == '__main__':
     current_path = os.getcwd() + '/../'
 
     test = HeatingRate()
-    # test.calculate_qccd(upto_n = 50, upto_t = 100, m = 5, name="QCCD_heating_rate_m5_100")
-    # test.calculate_qbus(upto_n=50, upto_t=100, m=5, name="Q-bus_heating_rate_m5_100")
+    # test.calculate_qccd(upto_n=27, upto_t=1000, m=12, name="QCCD_heating_rate_1000_2.25")
+    # test.calculate_qbus(upto_n=27, upto_t=1000, m=12, name="Q-bus_heating_rate_1000_2.25")
+    # test.calculate_closed_system(upto_n=50, upto_t=1000, m=1, name="closed_sytem_heating_rate_1000_2.25")
 
+    test_data1 = test.read_csv_data("Q-bus_heating_rate_1000_2.25.csv")
+    test_data2 = test.read_csv_data("QCCD_heating_rate_1000_2.25_core1.csv")
+    # test_data3 = test.read_csv_data("QCCD_heating_rate_1000_2.22_core2.csv")
+    # test_data4 = test.read_csv_data("closed_sytem_heating_rate_1000_2.25.csv")
 
-    # test_data1 = test.read_csv_data("QCCD_heating_rate_m5_100_core1.csv")
-    # test_data2 = test.read_csv_data("QCCD_heating_rate_m5_100_core2.csv")
-    # test_data3 = test.read_csv_data("Q-bus_heating_rate_m5_100.csv")
-    #
-    # test.compare_heating_rate(qccd_data=test_data2, qbus_data=test_data3)
+    # test.compare_heating_rate(qccd_data=test_data2, qbus_data=test_data1, name="comparing_n27_m12_2.25")
 
-    test_data = test.read_csv_data(file_name="comparing_Q-bus_vs_QCCD(5).csv")
-    test.plot_contour_line(data=test_data, name="test")
+    # test_data = test.read_csv_data(file_name="comparing_n27_m12_2.25.csv")
+    # test.plot_contour_line(data=test_data, name="comparing_n27_m12_2.25")
 
-    # test.plot_2d(list(x), name="test")
+    # 2D plot
+    # q_bus_quanta = test_data1["20"]
+    # qccd_quanta = test_data2["30"]
+    # closed_system = test_data4["30"]
+    # test.plot_2d(list(q_bus_quanta), n=20, name="q_bus_n_20")
+    # test.plot_2d(list(qccd_quanta), n=30, name="qccd_n_30")
+    # test.plot_2d(list(closed_system), n=30, name="closed_system_n_30")
 
-    # test.plot_3d(test_data1, test_data2, test_data3, name="Q-bus_QCCD_3d_plot")
+    # 3D plot
+    test.plot_3d(test_data1, test_data2, name="Q-bus_vs_QCCD_n27_3d_plot_2.25")
+    # test.plot_3d(test_data1, name="Q-bus_heating_rate_1000_2.25")
 
 
 
