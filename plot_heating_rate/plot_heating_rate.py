@@ -88,7 +88,7 @@ class HeatingRate:
             for j in range(upto_t+1):
                 if j != 0:
                     pre_k = data[i][j-1]
-                    k = (i/(i+m))*(pre_k + 4.2) + 1
+                    k = (i/(i+m))*(pre_k + 5.2) + 1.1
                     data[i].append(k)
 
         self.export_csv_data(file_name=name, data=data)
@@ -107,7 +107,7 @@ class HeatingRate:
             i += 1
             for j in range(upto_t+1):
                 if j != 0:
-                    k = (i/(i+m))*(9.4*j - 5.2) + 1
+                    k = (i/(i+m))*(12.4*j - 7.2) + 2
                     data[i].append(k)
 
         self.export_csv_data(file_name=name, data=data)
