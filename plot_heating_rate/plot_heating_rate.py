@@ -113,7 +113,7 @@ class HeatingRate:
         self.export_csv_data(file_name=name, data=data)
         return data
 
-    def calculate_asymm_qccd(self, upto_n: int = 50, upto_t: int = 50, m: int = 1,
+    def calculate_asymm_qccd_grid(self, upto_n: int = 50, upto_t: int = 50, m: int = 1,
                         k_init: float = 0, name: str = "QCCD_heating_rate"):
         total_data = {
             "data_1": {},
@@ -140,6 +140,41 @@ class HeatingRate:
                     s_core_phonon = (i/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + 2
                     t_core_phonon = (m/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + \
                                     (total_data[f'data_{t_core}'][f'{i}'][j - 1] + 10.3*(i-2)/(i-1) + 4.1/(i-1))
+
+                    total_data[f'data_{s_core}'][f'{i}'].append(s_core_phonon)
+                    total_data[f'data_{t_core}'][f'{i}'].append(t_core_phonon)
+
+        self.export_csv_data(file_name=f'{name}_core1', data=total_data['data_1'])  # core 1
+        self.export_csv_data(file_name=f'{name}_core2', data=total_data['data_2'])  # core 2
+        return total_data
+
+    def calculate_asymm_qccd_comb(self, upto_n: int = 50, upto_t: int = 50, m: int = 1,
+                        k_init: float = 0, name: str = "QCCD_heating_rate"):
+        total_data = {
+            "data_1": {},
+            "data_2": {}
+        }
+
+        for i in range(upto_n):
+            i += 1  # initial n = 1
+            # it means k0(initial #phonon) where n = i
+            total_data['data_1'][f'{i}'] = [k_init]
+            total_data['data_2'][f'{i}'] = [k_init]
+
+        for i in range(upto_n):
+            i += 1
+            for j in range(upto_t+1):
+                if j != 0:
+                    if j % 2 == 1:  # if t is odd
+                        s_core = 1
+                        t_core = 2
+                    else:  # if t is even
+                        s_core = 2
+                        t_core = 1
+
+                    s_core_phonon = (i/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + 2
+                    t_core_phonon = (m/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + \
+                                    (total_data[f'data_{t_core}'][f'{i}'][j - 1] + 10.3)
 
                     total_data[f'data_{s_core}'][f'{i}'].append(s_core_phonon)
                     total_data[f'data_{t_core}'][f'{i}'].append(t_core_phonon)
