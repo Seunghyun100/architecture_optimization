@@ -65,7 +65,7 @@ class HeatingRate:
             for j in range(upto_t+1):
                 if j != 0:
                     pre_k = data[i][j-1]
-                    k = (i/(i+m))*(pre_k + 5.2) + 1.1
+                    k = (i/(i+m))*(pre_k + 2.2+3*m) + 1.1
                     data[i].append(k)
 
         self.export_csv_data(file_name=name, data=data)
@@ -107,7 +107,7 @@ class HeatingRate:
             i += 1
             for j in range(upto_t+1):
                 if j != 0:
-                    k = (i/(i+m))*(12.4*j - 7.2) + 2
+                    k = (i/(i+m))*((6.4 + 6*m)*j - 4.2+3*m) + 2
                     data[i].append(k)
 
         self.export_csv_data(file_name=name, data=data)
@@ -141,12 +141,13 @@ class HeatingRate:
                         if is_grid:
                             s_core_phonon = (i/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + 2
                             t_core_phonon = (m/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + \
-                                            (total_data[f'data_{t_core}'][f'{i}'][j - 1] + 10.3*(core-2)/(core-1) + 4.1/(core-1))
+                                            (total_data[f'data_{t_core}'][f'{i}'][j - 1] + (4.3 + 6*m)*(core-2)/(core-1)
+                                             + 4.1/(core-1))
 
                         else:
                             s_core_phonon = (i / (i + m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + 2
                             t_core_phonon = (m / (i + m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + \
-                                            (total_data[f'data_{t_core}'][f'{i}'][j - 1] + 10.3)
+                                            (total_data[f'data_{t_core}'][f'{i}'][j - 1] + 4.3 + 6*m)
 
                     else:
                         s_core, t_core = 1, 2
@@ -154,18 +155,18 @@ class HeatingRate:
                             s_core_phonon_mid = (i / (i + m)) * (total_data['data_1'][f'{i}'][j - 1]) + 2
                             t_core_phonon_mid = (m / (i + m)) * (total_data['data_1'][f'{i}'][j - 1]) + \
                                                 (total_data['data_2'][f'{i}'][j - 1] +
-                                                 10.3 * (core - 2) / (core - 1) + 4.1 / (core - 1))
+                                                 (4.3 + 6*m) * (core - 2) / (core - 1) + 4.1 / (core - 1))
 
                             s_core_phonon = (m / (i + m)) * t_core_phonon_mid + (
-                                        s_core_phonon_mid + 10.3 * (core - 2) / (core - 1) + 4.1 / (core - 1))
+                                        s_core_phonon_mid + (4.3 + 6*m) * (core - 2) / (core - 1) + 4.1 / (core - 1))
                             t_core_phonon = (i / (i + m)) * t_core_phonon_mid + 2
 
                         else:
                             s_core_phonon_mid = (i / (i + m)) * (total_data['data_1'][f'{i}'][j - 1]) + 2
                             t_core_phonon_mid = (m / (i + m)) * (total_data['data_1'][f'{i}'][j - 1]) + \
-                                            (total_data['data_2'][f'{i}'][j - 1] + 10.3)
+                                            (total_data['data_2'][f'{i}'][j - 1] + 4.3 + 6*m)
 
-                            s_core_phonon = (m / (i + m)) * t_core_phonon_mid + (s_core_phonon_mid + 10.3)
+                            s_core_phonon = (m / (i + m)) * t_core_phonon_mid + (s_core_phonon_mid + 4.3 + 6*m)
                             t_core_phonon = (i / (i + m)) * t_core_phonon_mid + 2
 
                     total_data[f'data_{s_core}'][f'{i}'].append(s_core_phonon)
@@ -198,8 +199,8 @@ class HeatingRate:
             x_axis = range(len(i[0]))
             plt.plot(x_axis, i[0], label=i[1])
         plt.xlabel("#Shuttling")
-        plt.xlim(0, 200)
-        plt.ylim(0, 2000)
+        plt.xlim(0, 50)
+        plt.ylim(0, 200)
         plt.ylabel("#Phonon")
         plt.title("Motional excitation via shuttling")
         plt.legend(loc='upper left')
@@ -336,21 +337,21 @@ if __name__ == '__main__':
     current_path = os.getcwd() + '/../'
 
     test = HeatingRate()
-    # test.calculate_qccd(upto_n=50, upto_t=1000, m=1, symm=True, is_grid=True, name="Symm_QCCD_grid_n50m1_3.1")
-    # test.calculate_qccd(upto_n=50, upto_t=1000, m=1, symm=True, is_grid=False, name="Symm_QCCD_comb_n50m1_3.1")
-    # test.calculate_qccd(upto_n=50, upto_t=1000, m=1, symm=False, is_grid=True, name="Asymm_QCCD_grid_n50m1_3.1")
-    # test.calculate_qccd(upto_n=50, upto_t=1000, m=1, symm=False, is_grid=False, name="Asymm_QCCD_comb_n50m1_3.1")
-    # test.calculate_qbus(upto_n=50, upto_t=1000, m=1, name="Q-bus_n50m1_3.1")
+    test.calculate_qccd(upto_n=50, upto_t=1000, m=12, symm=True, is_grid=True, name="Symm_QCCD_grid_n50m12_3.1")
+    test.calculate_qccd(upto_n=50, upto_t=1000, m=12, symm=True, is_grid=False, name="Symm_QCCD_comb_n50m12_3.1")
+    test.calculate_qccd(upto_n=50, upto_t=1000, m=12, symm=False, is_grid=True, name="Asymm_QCCD_grid_n50m12_3.1")
+    test.calculate_qccd(upto_n=50, upto_t=1000, m=12, symm=False, is_grid=False, name="Asymm_QCCD_comb_n50m12_3.1")
+    test.calculate_qbus(upto_n=50, upto_t=1000, m=12, name="Q-bus_n50m12_3.1")
+    test.calculate_closed_system(upto_n=50, upto_t=1000, m=12, name="closed_system_n50m12_3.1")
     # test.calculate_qbus_ratio(upto_n=10, upto_t=1000, ratio=(9, 4), name="Q-bus_constant_ratio_heating_rate_1000_2.25")
-    # test.calculate_closed_system(upto_n=50, upto_t=1000, m=1, name="closed_system_n50m1_3.1")
 
     # test_data1 = test.read_csv_data("Q-bus_constant_ratio_heating_rate_1000_2.25.csv")
-    test_data1 = test.read_csv_data("Q-bus_n50m1_3.1.csv")
-    test_data2 = test.read_csv_data("closed_system_n50m1_3.1.csv")
-    test_data3 = test.read_csv_data("Symm_QCCD_grid_n50m1_3.1_core1.csv")
-    test_data4 = test.read_csv_data("Symm_QCCD_comb_n50m1_3.1_core1.csv")
-    test_data5 = test.read_csv_data("Asymm_QCCD_grid_n50m1_3.1_core1.csv")
-    test_data6 = test.read_csv_data("Asymm_QCCD_comb_n50m1_3.1_core1.csv")
+    test_data1 = test.read_csv_data("Q-bus_n50m12_3.1.csv")
+    test_data2 = test.read_csv_data("closed_system_n50m12_3.1.csv")
+    test_data3 = test.read_csv_data("Symm_QCCD_grid_n50m12_3.1_core1.csv")
+    test_data4 = test.read_csv_data("Symm_QCCD_comb_n50m12_3.1_core1.csv")
+    test_data5 = test.read_csv_data("Asymm_QCCD_grid_n50m12_3.1_core1.csv")
+    test_data6 = test.read_csv_data("Asymm_QCCD_comb_n50m12_3.1_core1.csv")
     # test_data4 = test.read_csv_data("closed_sytem_heating_rate_1000_2.25.csv")
 
     # test.compare_heating_rate(qccd_data=test_data2, qbus_data=test_data1, name="comparing_n27_m12_2.25")
@@ -359,16 +360,16 @@ if __name__ == '__main__':
     # test.plot_contour_line(data=test_data, name="comparing_n27_m12_2.25")
 
     # 2D plot
-    q_bus = list(test_data1["30"])
-    closed = list(test_data2["30"])
-    qccd_symm_grid = list(test_data3["30"])
-    qccd_symm_comb = list(test_data4["30"])
-    qccd_asymm_grid = list(test_data5["30"])
-    qccd_asymm_comb = list(test_data6["30"])
-    li = [(q_bus,"Q-bus"),(closed, "Closed system"), (qccd_symm_grid, "symmetric QCCD grid"),
+    q_bus = list(test_data1["27"])
+    closed = list(test_data2["27"])
+    qccd_symm_grid = list(test_data3["27"])
+    qccd_symm_comb = list(test_data4["27"])
+    qccd_asymm_grid = list(test_data5["27"])
+    qccd_asymm_comb = list(test_data6["27"])
+    li = [(q_bus,"Q-bus"),(closed, "Q-bus(closed system)"), (qccd_symm_grid, "symmetric QCCD grid"),
           (qccd_symm_comb, "symmetric QCCD comb"), (qccd_asymm_grid, "Asymmetric QCCD grid"),
           (qccd_asymm_comb, "Asymmetric QCCD comb")]
-    test.plot_2d(*li, n='n(30) m(1)', name="2d_plot_n30m1")
+    test.plot_2d(*li, n='n(30) m(1)', name="2d_plot_n27m12")
     # test.plot_2d(list(qccd_quanta), n=30, name="qccd_n_30")
     # test.plot_2d(list(closed_system), n=30, name="closed_system_n_30")
 
