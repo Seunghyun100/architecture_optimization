@@ -113,7 +113,7 @@ class HeatingRate:
         self.export_csv_data(file_name=name, data=data)
         return data
 
-    def calculate_qccd(self, upto_n: int = 50, upto_t: int = 50, m: int = 1,
+    def calculate_asymm_qccd(self, upto_n: int = 50, upto_t: int = 50, m: int = 1,
                         k_init: float = 0, name: str = "QCCD_heating_rate"):
         total_data = {
             "data_1": {},
@@ -137,9 +137,9 @@ class HeatingRate:
                         s_core = 2
                         t_core = 1
 
-                    s_core_phonon = (i/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + 1
+                    s_core_phonon = (i/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + 2
                     t_core_phonon = (m/(i+m)) * (total_data[f'data_{s_core}'][f'{i}'][j - 1]) + \
-                                    (total_data[f'data_{t_core}'][f'{i}'][j - 1] + 8.3)
+                                    (total_data[f'data_{t_core}'][f'{i}'][j - 1] + 10.3*(i-2)/(i-1) + 4.1/(i-1))
 
                     total_data[f'data_{s_core}'][f'{i}'].append(s_core_phonon)
                     total_data[f'data_{t_core}'][f'{i}'].append(t_core_phonon)
